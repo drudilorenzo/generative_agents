@@ -6,7 +6,7 @@
 <img src="cover.png" alt="Smallville" style="width: 80%; min-width: 300px; display: block; margin: auto;">
 </p>
 
-This repository contains fix and improvement for the repository "[generative_agents](https://github.com/joonspk-research/generative_agents)" that accompanies the paper "[Generative Agents: Interactive Simulacra of Human Behavior](https://arxiv.org/abs/2304.03442)."
+This repository contains fixes and improvements for the repository "[generative_agents](https://github.com/joonspk-research/generative_agents)" that accompanies the paper "[Generative Agents: Interactive Simulacra of Human Behavior](https://arxiv.org/abs/2304.03442)."
 
 For a more detailed explanation see the "[original readme](https://github.com/drudilorenzo/generative_agents/blob/main/README_origin.md)".
 
@@ -71,9 +71,9 @@ OpenAI example:
 }
 ```
 
-Feel free to change and test also other models (and change accordly the input and ouput costs).\
+Feel free to change and test also other models (and change accordingly the input and output costs).\
 Be aware that the only supported clients are **azure** and **openai**.\
-The generation and the embeddings models are configured separately to be able to use different clients.\
+The generation and the embedding models are configured separately to be able to use different clients.\
 Change also the `cost-upperbound` according to your needs (the cost computation is done using "[openai-cost-logger](https://github.com/drudilorenzo/openai-cost-logger)" and the costs are specified per million tokens).
 
 ## Running a simulation
@@ -90,9 +90,9 @@ Change also the `cost-upperbound` according to your needs (the cost computation 
 
 ## Cost Tracking
 
-For the cost tracking is used the package "[openai-cost-logger](https://github.com/drudilorenzo/openai-cost-logger)". Given the possible high cost of a simulation  you can set a cost upperbound in the config file to be able to raise an exception and stop the execution when it is reached.
+For the cost tracking is used the package "[openai-cost-logger](https://github.com/drudilorenzo/openai-cost-logger)". Given the possible high cost of a simulation,  you can set a cost upperbound in the config file to be able to raise an exception and stop the execution when it is reached.
 
-See all the details of your expenses using the notebook [cost_viz.ipynb](https://github.com/drudilorenzo/generative_agents/blob/main/cost_viz.ipynb)."
+See all the details of your expenses using the notebook "[cost_viz.ipynb](https://github.com/drudilorenzo/generative_agents/blob/main/cost_viz.ipynb)."
 
 ## Cost Assessment
 
