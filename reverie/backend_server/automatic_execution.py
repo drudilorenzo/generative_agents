@@ -86,7 +86,10 @@ def get_starting_step(exp_name: str) -> int:
     if full_path.exists():
         files = os.listdir(full_path)
         steps = [int(os.path.splitext(filename)[0]) for filename in files]
-        current_step = max(steps)
+        if len(steps) == 0:
+          current_step = 0
+        else:
+          current_step = max(steps)
     return current_step
 
 
@@ -181,6 +184,8 @@ if __name__ == '__main__':
     print(f"(Auto-Exec): Target: {target}", flush=True)
     print(f"(Auto-Exec): Total steps: {tot_steps}", flush=True)
     print(f"(Auto-Exec): Checkpoint Freq: {checkpoint_freq}", flush=True)    
+
+
         
     while current_step < tot_steps:
         try:

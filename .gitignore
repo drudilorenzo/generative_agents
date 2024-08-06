@@ -1,5 +1,6 @@
 # OpenAI API key
 openai_config.json
+llm_config.json
 
 environment/frontend_server/storage/*
 environment/frontend_server/temp_storage*/*

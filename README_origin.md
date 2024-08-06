@@ -30,6 +30,8 @@ collision_block_id = "32125"
 
 # Verbose 
 debug = True
+EXCEPT_ON_FAILSAFE=False
+
 ```
 Replace `<Your OpenAI API>` with your OpenAI API key, and `<name>` with your name.
  

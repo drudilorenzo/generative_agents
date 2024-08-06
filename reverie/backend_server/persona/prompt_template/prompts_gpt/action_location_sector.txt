@@ -1,0 +1,53 @@
+Variables: 
+!<INPUT 0>! -- Persona name
+!<INPUT 1>! -- Maze all possible sectors
+!<INPUT 2>! -- Persona name
+!<INPUT 3>! -- Persona living sector
+!<INPUT 4>! -- Persona living sector arenas
+!<INPUT 5>! -- Persona name
+!<INPUT 6>! -- Persona current sector
+!<INPUT 7>! -- Persona current sector arenas
+!<INPUT 8>! -- curr action description
+!<INPUT 9>! -- Persona name
+<commentblockmarker>###</commentblockmarker>
+Task -- choose an appropriate area  from the area options for a task at hand. 
+!<INPUT 0>! lives in {!<INPUT 1>!} that has !<INPUT 2>!.
+!<INPUT 3>! is currently in {!<INPUT 4>!} that has !<INPUT 5>!. !<INPUT 6>!
+* Stay in the current area if the activity can be done there. Only go out if the activity needs to take place in another place.
+* Must be one of the "Area options," verbatim.
+
+--- example 1
+Sam Kim lives in {Sam Kim's house} that has Sam Kim's room, bathroom, kitchen.
+Sam Kim is currently in {Sam Kim's house} that has Sam Kim's room, bathroom, kitchen. 
+Area options: {Sam Kim's house, The Rose and Crown Pub, Hobbs Cafe, Oak Hill College, Johnson Park, Harvey Oak Supply Store, The Willows Market and Pharmacy}.
+* Stay in the current area if the activity can be done there. Only go out if the activity needs to take place in another place.
+* Must be one of the "Area options," verbatim.
+For taking a walk, Sam Kim should go to the following area: {Johnson Park}
+--- example 2
+Jane Anderson lives in {Oak Hill College Student Dormatory} that has Jane Anderson's room.
+Jane Anderson is currently in {Oak Hill College} that has a classroom, library
+Area options: {Oak Hill College Student Dormatory, The Rose and Crown Pub, Hobbs Cafe, Oak Hill College, Johnson Park, Harvey Oak Supply Store, The Willows Market and Pharmacy}. 
+* Stay in the current area if the activity can be done there. Only go out if the activity needs to take place in another place.
+* Must be one of the "Area options," verbatim.
+For eating dinner, Jane Anderson should go to the following area: {Hobbs Cafe}
+--- example 3
+Mike Johnson lives in {Harvey Oak Supply Store} that has Mike Johnson's office.
+Mike Johnson is currently in {Harvey Oak Supply Store} that has hardware supplies, gardening tools.
+Area options: {Oak Hill College Student Dormitory, The Rose and Crown Pub, Hobbs Cafe, Oak Hill College, Johnson Park, Harvey Oak Supply Store, The Willows Market and Pharmacy}.
+For purchasing gardening tools, Mike Johnson should go to the following area: {Harvey Oak Supply Store}
+--- example 4
+Tom Grant lives in {The Willows Market and Pharmacy} that has Tom Grant's office.
+Tom Grant is currently in {The Willows Market and Pharmacy} that has a pharmacy, grocery section.
+Area options: {Oak Hill College Student Dormitory, The Rose and Crown Pub, Hobbs Cafe, Oak Hill College, Johnson Park, Harvey Oak Supply Store, The Willows Market and Pharmacy}.
+For buying groceries, Tom Grant should go to the following area: {The Willows Market and Pharmacy}
+---
+
+!<INPUT 0>! lives in {!<INPUT 1>!} that has !<INPUT 2>!.
+!<INPUT 3>! is currently in {!<INPUT 4>!} that has !<INPUT 5>!. !<INPUT 6>!
+* Stay in the current area if the activity can be done there. Only go out if the activity needs to take place in another place.
+* Must be one of the "Area options," verbatim.
+Area options  (MUST pick one of {!<INPUT 7>!}): 
+YOUR ANSWER IS BEING USED IN CODE DON"T EXPLAIN YOUR REASONING JUST DUMP YOUR VERY SHORT ANSWER DIRECTLY HERE!
+YOU MUST MATCH THE CAPITALIZATION OF THE AREA 
+YOU MUST USE THE } SYMBOL TO FINISH YOUR ANSWER!
+!<INPUT 8>! is !<INPUT 9>!. For !<INPUT 10>!, !<INPUT 11>! should go to the following area: {

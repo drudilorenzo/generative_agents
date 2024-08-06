@@ -1,0 +1,36 @@
+insight_and_evidence_v1.txt
+
+Variables: 
+!<INPUT 0>! -- Numbered list of event/thought statements
+!<INPUT 1>! -- target persona name or "the conversation"
+
+<commentblockmarker>###</commentblockmarker>
+Input:
+!<INPUT 0>!
+
+example 1:
+What 3 high-level insights can you infer from the above statements? (example format: INSIGHT X|| <insight text> (because of 1, 5, 3))
+INSIGHT 1|| Lucas Parker and Hannah Parker frequently discuss their future vacation plans, health routines, and work projects. (because of 0, 2, 5, 7)
+INSIGHT 2|| Lucas Parker has a detailed weekly plan that includes various professional and personal activities for Thursday, June 22. (because of 8)
+INSIGHT 3|| Lucas Parker and Hannah Parker share meals and go for bike rides on weekends. (because of 8, 11)
+INSIGHT 4|| Lucas Parker dedicates time to hobbies such as photography and gardening. (because of 8, 12)
+
+
+example 2:
+What 6 high-level insights can you infer from the above statements? (example format: INSIGHT X|| <insight text> (because of 1, 5, 3))
+INSIGHT 1|| Emma Brooks and Tom Brooks often talk about home improvement projects, weekend plans, and their children's school events. (because of 1, 4, 5, 9)
+INSIGHT 2|| Emma Brooks organizes her tasks meticulously, including a specific plan for Wednesday, August 17. (because of 3)
+INSIGHT 3|| Emma Brooks and Tom Brooks enjoy gardening and watching movies together in their leisure time. (because of 3, 10)
+INSIGHT 4|| Emma Brooks sets aside evenings for writing and volunteer work. (example format: insight (because of 1, 5, 3))
+INSIGHT 5|| Emma Brooks supports Tom Brooks in his woodworking hobby, discussing design ideas and workshop safety. (because of 13)
+INSIGHT 6|| Emma Brooks is actively involved in Hannah Parker's campaign for the school board, focusing on her educational philosophy. (because of 6)
+
+example 3:
+What 5 high-level insights can you infer from the above statements? (example format: INSIGHT X|| <insight text> (because of 1, 5, 3))
+INSIGHT 1|| Noah Lee and Sara Lee often converse about their plans to remodel their kitchen, Sara's art projects, and upcoming family gatherings. (because of 0, 2, 4, 6)
+INSIGHT 2|| Noah Lee plans his days carefully, with a structured schedule for Tuesday, September 12. (because of 3)
+INSIGHT 3|| Noah Lee and Sara Lee make time for morning walks and evening game nights. (because of 3, 9)
+INSIGHT 4|| Noah Lee spends weekends fishing and participating in local sports clubs. (because of 3, 7)
+INSIGHT 5|| Noah Lee is keenly interested in Sara Lee's upcoming art exhibition and her creative process. (because of 5)
+
+What !<INPUT 1>! high-level insights can you infer from the above statements? (example format: INSIGHT X|| <insight text> (because of 1, 5, 3))

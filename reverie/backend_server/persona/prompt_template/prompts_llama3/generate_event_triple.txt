@@ -1,0 +1,86 @@
+generate_event_triple_v1.txt
+
+Variables: 
+!<INPUT 0>! -- Persona's full name. 
+!<INPUT 1>! -- Current action description
+!<INPUT 2>! -- Persona's full name. 
+
+<commentblockmarker>###</commentblockmarker>
+Task: Turn the input into (subject, predicate, object). 
+
+Start by reasoning about the sentence in general for 2-3 sentences
+Then try to conclude the best choice for the predicate in 1-2 sentences
+Then try to conclude the best choice for the object in 1-2 sentences
+
+Finally, give your complete answer in a single line
+Output: (subject || predicate || object ))
+
+--example--
+Input: Sam Johnson is eating breakfast
+
+Reasoning: The sentence "Sam Johnson is eating breakfast" consists of a subject "Sam Johnson," an auxiliary verb "is," and a main verb "eating," which has a direct object "breakfast." The presence of a direct object "breakfast" dictates that "eating" should be the predicate, as it is the main action being performed on the object.
+
+Best choice for the predicate: In this case, the main verb "eating" should be used as the predicate because it directly relates to the action involving the object.
+
+Best choice for the object: The direct object is "breakfast," which completes the action of the verb "eating."
+
+Complete Answer: (Sam Johnson || eating || breakfast)
+
+--example--
+Input: Joon Park is brewing coffee.
+
+Reasoning: The sentence "Joon Park is brewing coffee" contains a subject "Joon Park," an auxiliary verb "is," and a main verb "brewing," which is connected to the direct object "coffee." The structure indicates that the action being performed by the subject is "brewing," and the object of this action is "coffee."
+
+Best choice for the predicate: The main verb "brewing" should be the predicate as it directly represents the action taken by the subject.
+
+Best choice for the object: The direct object is "coffee," which completes the action described by the verb "brewing."
+
+Complete Answer: (Joon Park || brewing || coffee)
+
+--example--
+Input: Jane Cook is sleeping. 
+
+Reasoning: The sentence "Jane Cook is sleeping" consists of a subject "Jane Cook," an auxiliary verb "is," and a main verb "sleeping." While "sleeping" represents the main action, "is" serves as the linking verb that connects the subject to the predicate in this case.
+
+Best choice for the predicate: Given that "is" serves as the linking verb connecting the subject to the action, it is appropriate to consider "is" as the predicate.
+
+Best choice for the object: Since "sleeping" functions as a state of being in this sentence, there is no direct object. Instead, "sleeping" can be seen as a complement to the predicate.
+
+Complete Answer: (Jane Cook || is || sleeping)
+
+--example--
+Input: Michael Bernstein is writing email on a computer. 
+
+Reasoning: The sentence "Michael Bernstein is writing email on a computer" consists of a subject "Michael Bernstein," an auxiliary verb "is," a main verb "writing," and two objects "email" and "on a computer." The structure indicates that the main action is "writing," which directly affects the object "email" and is accompanied by the phrase "on a computer."
+
+Best choice for the predicate: The main verb "writing" should be used as the predicate because it represents the action being performed by the subject.
+
+Best choice for the object: The primary direct object is "email," which completes the action described by the verb "writing." The phrase "on a computer" provides additional context but is not the main object.
+
+Complete Answer: (Michael Bernstein || writing || email)
+
+--example--
+Input:  bed is unoccupied.
+
+Reasoning: The sentence "bed is unoccupied" consists of a subject "bed," a linking verb "is," and an adjective "unoccupied." The structure indicates that the state of being of the subject "bed" is described by the adjective "unoccupied."
+
+Best choice for the predicate: The linking verb "is" serves as the predicate because it connects the subject to its state of being.
+
+Best choice for the object: In this case, there is no direct object. Instead, "unoccupied" acts as a complement to the predicate.
+
+Complete Answer: (bed || is || unoccupied)
+
+--example--
+Input: shelf is fully stocked with various items including a first aid kit, a flashlight, and
+Reasoning: The sentence "shelf is fully stocked with various items including a first aid kit, a flashlight, and..." consists of a subject "shelf," a linking verb "is," and a predicate nominative "fully
+stocked." The phrase "with various items" introduces the main object, which includes several subordinate objects.
+
+Best choice for the predicate: The linking verb "is" serves as the predicate because it connects the subject to its state of being described by the predicate nominative "fully stocked."
+
+Best choice for the object: The main object is "various items," which includes several subordinate objects such as a first aid kit, a flashlight, and others.
+
+Complete Answer: (shelf || is || fully stocked)
+
+--FILL THIS OUT --
+Input: !<INPUT 0>! is !<INPUT 1>!. 
+

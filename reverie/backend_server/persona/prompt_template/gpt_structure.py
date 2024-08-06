@@ -13,7 +13,7 @@ from utils import *
 from openai_cost_logger import DEFAULT_LOG_PATH
 from persona.prompt_template.openai_logger_singleton import OpenAICostLogger_Singleton
 
-config_path = Path("../../openai_config.json")
+config_path = Path("../../llm_config.json")
 with open(config_path, "r") as f:
     openai_config = json.load(f) 
 
@@ -40,6 +40,13 @@ def setup_client(type: str, config: dict):
     client = OpenAI(
         api_key=config["key"],
     )
+  elif type == "ollama":
+    # ollama can use the OpenAI interface
+    client = OpenAI(
+        api_key=config["key"],
+        base_url=config["base_url"]
+    )
+
   else:
     raise ValueError("Invalid client")
   return client
@@ -52,6 +59,11 @@ if openai_config["client"] == "azure":
   })
 elif openai_config["client"] == "openai":
   client = setup_client("openai", { "key": openai_config["model-key"] })
+elif openai_config["client"] == "ollama":
+  client = setup_client("ollama", { "key": openai_config["model-key"],
+                                               "base_url": openai_config["base_url"] })
+else:
+  raise Exception("No valid client selected!")
 
 if openai_config["embeddings-client"] == "azure":  
   embeddings_client = setup_client("azure", {
@@ -60,9 +72,13 @@ if openai_config["embeddings-client"] == "azure":
       "api-version": openai_config["embeddings-api-version"],
   })
 elif openai_config["embeddings-client"] == "openai":
-  embeddings_client = setup_client("openai", { "key": openai_config["embeddings-key"] })
+  embeddings_client = setup_client("openai",{ "key": openai_config["embeddings-key"] })
+elif openai_config["embeddings-client"] == "ollama":
+  embeddings_client = setup_client("ollama", { "key": openai_config["embeddings-key"],
+                                               "base_url": openai_config["base_url"] })
 else:
   raise ValueError("Invalid embeddings client")
+
 
 cost_logger = OpenAICostLogger_Singleton(
   experiment_name = openai_config["experiment-name"],
@@ -111,10 +127,11 @@ def ChatGPT_request(prompt):
     return "ChatGPT ERROR"
 
 
+# this function is frustratingly similar to safe_generate_response
 def ChatGPT_safe_generate_response(prompt, 
                                    example_output,
                                    special_instruction,
-                                   repeat=3,
+                                   repeat=5,
                                    fail_safe_response="error",
                                    func_validate=None,
                                    func_clean_up=None,
@@ -122,60 +139,42 @@ def ChatGPT_safe_generate_response(prompt,
   # prompt = 'GPT-3 Prompt:\n"""\n' + prompt + '\n"""\n'
   prompt = '"""\n' + prompt + '\n"""\n'
   prompt += f"Output the response to the prompt above in json. {special_instruction}\n"
+  prompt += "So for example do not output 5 output {'output': 5}"
   prompt += "Example output json:\n"
   prompt += '{"output": "' + str(example_output) + '"}'
 
-  if verbose: 
-    print ("CHAT GPT PROMPT")
-    print (prompt)
-
   for i in range(repeat): 
-
-    try: 
-      curr_gpt_response = ChatGPT_request(prompt).strip()
+    if verbose: 
+      print ("---- repeat count: \n", i)
+      print("---- prompt: ", prompt)
+    curr_gpt_response = ChatGPT_request(prompt).strip()
+    if verbose: 
+      print("---- curr_gpt_response: ", curr_gpt_response)
+    try:
       end_index = curr_gpt_response.rfind('}') + 1
       curr_gpt_response = curr_gpt_response[:end_index]
       curr_gpt_response = json.loads(curr_gpt_response)["output"]
-      
-      if func_validate(curr_gpt_response, prompt=prompt): 
-        return func_clean_up(curr_gpt_response, prompt=prompt)
-      
-      if verbose: 
-        print ("---- repeat count: \n", i, curr_gpt_response)
-        print (curr_gpt_response)
-        print ("~~~~")
+    except Exception as e:
+      if verbose:
+        print("ERROR func_clean_up: ", e)
+      continue
 
-    except: 
-      pass
+    if verbose: 
+      print("---- func_validate: ", func_validate(curr_gpt_response))
+      try:
+          print("----  func_clean_up: ", func_clean_up(curr_gpt_response))
+      except Exception as e:
+          print("ERROR func_clean_up: ", e)
+      print ("~~~~")
 
-  return False
+    if func_validate(curr_gpt_response, prompt=prompt): 
+      return func_clean_up(curr_gpt_response, prompt=prompt)
 
 
-def ChatGPT_safe_generate_response_OLD(prompt, 
-                                   repeat=3,
-                                   fail_safe_response="error",
-                                   func_validate=None,
-                                   func_clean_up=None,
-                                   verbose=False): 
-  if verbose: 
-    print ("CHAT GPT PROMPT")
-    print (prompt)
-
-  for i in range(repeat): 
-    try: 
-      curr_gpt_response = ChatGPT_request(prompt).strip()
-      if func_validate(curr_gpt_response, prompt=prompt): 
-        return func_clean_up(curr_gpt_response, prompt=prompt)
-      if verbose: 
-        print (f"---- repeat count: {i}")
-        print (curr_gpt_response)
-        print ("~~~~")
-
-    except: 
-      pass
-  print ("FAIL SAFE TRIGGERED") 
-  return fail_safe_response
-
+  if EXCEPT_ON_FAILSAFE:
+    raise Exception("Too many retries and failsafes are disabled!")
+  else:
+    return fail_safe_response
 
 def GPT_request(prompt, gpt_parameter): 
   """
@@ -191,8 +190,10 @@ def GPT_request(prompt, gpt_parameter):
   """
   temp_sleep()
   try: 
+    # for the llama3 model system doesn't give great results
+    # and assistant is much better
     messages = [{
-      "role": "system", "content": prompt
+      "role": "user", "content": prompt
     }]
     response = client.chat.completions.create(
                 model=gpt_parameter["engine"],
@@ -225,6 +226,9 @@ def generate_prompt(curr_input, prompt_lib_file):
   RETURNS: 
     a str prompt that will be sent to OpenAI's GPT server.  
   """
+  if debug:
+    print("curr_input: ", curr_input)
+    print("prompt_lib_file: ", prompt_lib_file)
   if type(curr_input) == type("string"): 
     curr_input = [curr_input]
   curr_input = [str(i) for i in curr_input]
@@ -232,44 +236,95 @@ def generate_prompt(curr_input, prompt_lib_file):
   f = open(prompt_lib_file, "r")
   prompt = f.read()
   f.close()
+  if debug:
+    print("---- prompt template inputs")
   for count, i in enumerate(curr_input):   
     prompt = prompt.replace(f"!<INPUT {count}>!", i)
+    if debug:
+      print(f"        !<INPUT {count}>!", i)
   if "<commentblockmarker>###</commentblockmarker>" in prompt: 
     prompt = prompt.split("<commentblockmarker>###</commentblockmarker>")[1]
   return prompt.strip()
 
-
+# this function is frustratingly similar to CHATGPT_safe_generate_response
 def safe_generate_response(prompt, 
                            gpt_parameter,
                            repeat=5,
                            fail_safe_response="error",
+                           prompt_input=[],
+                           prompt_template="",
                            func_validate=None,
                            func_clean_up=None,
                            verbose=False): 
-  if verbose: 
-    print (prompt)
+  if debug:
+    verbose = True
 
   for i in range(repeat): 
-    curr_gpt_response = GPT_request(prompt, gpt_parameter)
-    try:
-      if func_validate(curr_gpt_response, prompt=prompt): 
-        return func_clean_up(curr_gpt_response, prompt=prompt)
-      if verbose: 
-        print ("---- repeat count: ", i, curr_gpt_response)
-        print (curr_gpt_response)
-        print ("~~~~")
-    except:
-      pass
-  return fail_safe_response
 
+    if verbose: 
+      print("------- BEGIN SAFE GENERATE --------")
+      print ("---- repeat count: ", i)
+      for j, prompt_j in enumerate(prompt_input):
+        print("---- prompt_input_{}".format(j), prompt_j)
+      print("---- prompt: ", prompt)
+      print("---- prompt_template: ", prompt_template)
+      print("---- gpt_parameter: ", gpt_parameter)
+
+    curr_gpt_response = GPT_request(prompt, gpt_parameter)
+
+    if verbose: 
+      print("---- curr_gpt_response: ", curr_gpt_response)
+
+    try: 
+      response_cleanup = func_clean_up(curr_gpt_response, prompt=prompt)
+    except Exception as e:
+      if verbose:
+        print("----  func_clean_up:  ERROR", e)
+        print("---- func_validate: ", False)
+        print(f"------- END TRIAL {i} --------")
+      continue
+
+    try: 
+      response_valid = func_validate(curr_gpt_response, prompt=prompt)
+    except Exception as e:
+      if verbose:
+        print("----  func_clean_up: ", response_cleanup)
+        print("---- func_validate: ERROR", e)
+        print(f"------- END TRIAL {i} --------")
+      continue
+
+    if verbose:
+      print("----  func_clean_up: ", response_cleanup)
+      print("---- func_validate: ", response_valid)
+      print(f"------- END TRIAL {i} --------")
+    if response_valid:
+      print("------- END SAFE GENERATE --------")
+      return response_cleanup
+  
+  # behaviour if all retries are used up
+  if EXCEPT_ON_FAILSAFE:
+    raise Exception("Too many retries and failsafes are disabled!")
+  else:
+    print("ERROR fail to succesfully retrieve response")
+    print("ERROR using fail_safe: ", fail_safe_response)
+    print("------- END SAFE GENERATE --------")
+    return fail_safe_response
 
 def get_embedding(text, model=openai_config["embeddings"]):
   text = text.replace("\n", " ")
   if not text: 
     text = "this is blank"
-  response = embeddings_client.embeddings.create(input=[text], model=model)
-  cost_logger.update_cost(response=response, input_cost=openai_config["embeddings-costs"]["input"], output_cost=openai_config["embeddings-costs"]["output"])
-  return response.data[0].embedding
+
+  # ollama does not support the client interface for embeddings 
+  # so this needs to be managed separately 
+  if openai_config["client"] == "ollama":
+    import ollama
+    return ollama.embeddings(model=model,prompt=text)['embedding']
+  else:
+    response = embeddings_client.embeddings.create(input=[text], model=model)
+    cost_logger.update_cost(response=response, input_cost=openai_config["embeddings-costs"]["input"], output_cost=openai_config["embeddings-costs"]["output"])
+    return response.data[0].embedding
+
 
 
 if __name__ == '__main__':
@@ -300,21 +355,3 @@ if __name__ == '__main__':
                                  True)
 
   print (output)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

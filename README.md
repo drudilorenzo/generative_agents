@@ -13,7 +13,7 @@ Since the project is no longer officially supported, I decided to develop some n
 - [x] **Cost tracking** using [openai-cost-logger](https://github.com/drudilorenzo/openai-cost-logger)
 - [x] Set **cost upperbound** and stop the experiment when it is reached
 - [x] New models and OpenAI API support
-- [x] Added [skip-morning-s-14](https://github.com/drudilorenzo/generative_agents/tree/fix-and-improve/environment/frontend_server/storage/skip-morning-s-14): a simulation based on `base_the_ville_n25` that starts after 3000 steps (~8:00am). That permits us to save time and see interactions and actions earlier.
+- [x] Added [skip-morning-s-14](https://github.com/drudilorenzo/generative_agents/tree/fix-and-improve/environment/frontend_server/storage/skip-morning-s-14): a simulation based on `base_the_ville_n25` that starts after 3000 steps (~8:00am). That permits us to save time and see interactions and actions earlier. (Note that one must use the same embedding model to load this simulation)
 - [x] **Zoom in**/**Zoom out** using Z and X
 - [x] [Powerful automated script](#step-3-automatic-execution) for enhanced simulation performance.
 
@@ -38,7 +38,7 @@ Do not change the env name to be able to use the bash scripts later.
 
 ### Step 2. OpenAI Config
 
-Create a file called `openai_config.json` in the root directory.\
+Create a file called `llm_config.json` in the root directory.\
 Azure example:
 ```json
 {
@@ -85,10 +85,37 @@ OpenAI example:
     "cost-upperbound": 10
 }
 ```
+Ollama example:
+```json
+{
+    "client": "ollama", 
+    "base_url": "http://localhost:11434/v1",
+    "model": "llama3-chatqa:8b",
+    "prompt_template": "prompts_llama3",
+    "model-key": "dummy_key_needed_but_not_used",
+    "model-costs": {
+        "input":  0.001,
+        "output": 0.001
+    },
+    "embeddings-client": "ollama",
+    "embeddings": "nomic-embed-text",
+    "embeddings-key": "dummy_key_needed_but_not_used",
+    "embeddings-costs": {
+        "input":  0.0001,
+        "output": 0.0001
+    },
+    "experiment-name": "simulacra-test-ollama",
+    "cost-upperbound": 10000000000000
+}
+```
 
 Feel free to change and test also other models (and change accordingly the input and output costs).\
-Be aware that the only supported clients are **azure** and **openai**.\
+Be aware that the only fully-supported clients are **azure** and **openai**.\
+The ollama client supports local models, but many of the prompts do not full work with local models yet.
+Make sure to first install ollama, and to pull any models you plan on using, see "[ollama-openai-compatibility](https://ollama.com/blog/openai-compatibility)"\
 The generation and the embedding models are configured separately to be able to use different clients.\
+The llama3 models require different prompts than the chatgpt, and these different prompts are specified via the template_dir argument.
+If you are testing a new model you can use either the prompts_chagpt or the prompts_llama3 as starting points.
 Change also the `cost-upperbound` according to your needs (the cost computation is done using "[openai-cost-logger](https://github.com/drudilorenzo/openai-cost-logger)" and the costs are specified per million tokens).
 
 

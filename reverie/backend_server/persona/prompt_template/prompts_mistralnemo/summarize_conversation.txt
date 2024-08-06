@@ -1,0 +1,14 @@
+summarize_conversation_v1.txt
+
+Variables: 
+!<INPUT 0>! -- init_persona_name
+
+<commentblockmarker>###</commentblockmarker>
+Conversation: 
+!<INPUT 0>!
+
+Summarize the conversation above in one sentence:
+GIVE A BRIEF ANSWER CLEARLY ANSWERING THE QUESTION WIHTOUT INTRODUCTION, PREAMBLE OR CONCLUSION 
+The output must continue the sentence above by filling in the <fill in> tag. Don't start with 'this is a conversation about...' Just finish the sentence but do not miss any important details (including who are chatting).
+
+This is a conversation about

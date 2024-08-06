@@ -6,6 +6,7 @@ Description: Compresses a simulation for replay demos.
 """
 import shutil
 import json
+import argparse
 from global_methods import *
 
 def compress(sim_code):
@@ -60,7 +61,15 @@ def compress(sim_code):
 
 
 if __name__ == '__main__':
-  compress("July1_the_ville_isabella_maria_klaus-step-3-9")
+  parser = argparse.ArgumentParser(description='Reverie Compressor')
+  parser.add_argument(
+    '--compress_name',
+    type=str,
+    default="July1_the_ville_isabella_maria_klaus-step-3-9",
+    help='The name of the simulation to compress'
+  )
+  compress_name = parser.parse_args().compress_name
+  compress(compress_name)
 
 
 

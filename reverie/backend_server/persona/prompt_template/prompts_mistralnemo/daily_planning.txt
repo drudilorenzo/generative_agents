@@ -1,0 +1,23 @@
+daily_planning_v6.txt
+
+Variables: 
+!<INPUT 0>! -- Commonset
+!<INPUT 1>! -- Lifestyle
+!<INPUT 2>! -- Reverie date time now
+!<INPUT 3>! -- Persona first names
+!<INPUT 4>! -- wake_up_hour
+
+<commentblockmarker>###</commentblockmarker>
+!<INPUT 0>!
+
+In general, !<INPUT 1>!
+Today is !<INPUT 2>!. Here is !<INPUT 3>!'s plan today in broad-strokes with the time of the day. For example: || have a lunch at 12:00 pm || watch TV from 7 to 8 pm. 
+
+ Prompt: Generate a structured daily schedule for !<INPUT 1>!, starting immediately with the activities, using the following format:
+ - Use double pipes '||' as separators.
+ - Begin each activity with a sequence number followed by a period and a space.
+ - Each activity should include both the time and a description.
+ - Ensure the schedule covers the entire day from wake-up to sleep.
+
+ Please start directly with the activities using the format below:
+ || 1. [Time] - [Activity] || 2. [Time] - [Activity] || ... ||

@@ -1,0 +1,25 @@
+generate_focal_pt_v1.txt
+
+Variables: 
+!<INPUT 0>! -- Event/thought statements 
+!<INPUT 1>! -- Count 
+
+<commentblockmarker>###</commentblockmarker>
+!<INPUT 0>!
+
+ANSWER SHORT AND CONCISE WITHOUT PREAMBLE INTRODUCTION OR CONCLUSION
+ANSWER BY HAVING THREE STATEMENTS SEPERATED BY COMMAS
+start your answer with BEGIN and finish it with END 
+
+example 1:
+Given only the information above, what are 3 most salient high-level questions we can answer about the subjects in the statements?
+BEGIN What should Jane do for lunch, Does Jane like strawberry, Who is Jane END
+
+example 2:
+Given only the information above, what are 3 most salient high-level questions we can answer about the subjects in the statements?
+BEGIN What does Steve's typical day look like, How does Steve spend his mornings, What activities does Steve prioritize during her day END
+
+example 3:
+BEGIN What are Frodo's daily routines, How does Frodo plan his meals, What leisure activities does Frodo engage in during the evening? END
+
+Given only the information above, what are !<INPUT 1>! most salient high-level questions we can answer about the subjects in the statements?
