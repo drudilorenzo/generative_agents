@@ -4,13 +4,12 @@ Author: Joon Sung Park (joonspk@stanford.edu)
 File: execute.py
 Description: This defines the "Act" module for generative agents. 
 """
-import sys
 import random
-sys.path.append('../../')
 
-from global_methods import *
-from path_finder import *
-from utils import *
+import sys
+sys.path.append('../../')
+from path_finder import path_finder
+from utils import collision_block_id
 
 def execute(persona, maze, personas, plan): 
   """
@@ -78,6 +77,10 @@ def execute(persona, maze, personas, plan):
     elif "<random>" in plan: 
       # Executing a random location action.
       plan = ":".join(plan.split(":")[:-1])
+
+      if plan not in maze.address_tiles: 
+        plan = "the Ville:Johnson Park:park:park garden"
+        
       target_tiles = maze.address_tiles[plan]
       target_tiles = random.sample(list(target_tiles), 1)
 
@@ -88,7 +91,7 @@ def execute(persona, maze, personas, plan):
       # string form. <maze.address_tiles> takes this and returns candidate 
       # coordinates. 
       if plan not in maze.address_tiles: 
-        maze.address_tiles["Johnson Park:park:park garden"] #ERRORRRRRRR
+        target_tiles = maze.address_tiles["the Ville:Johnson Park:park:park garden"]
       else: 
         target_tiles = maze.address_tiles[plan]
 
@@ -118,36 +121,36 @@ def execute(persona, maze, personas, plan):
     target_tiles = new_target_tiles
 
     # Now that we've identified the target tile, we find the shortest path to
-    # one of the target tiles. 
+    # one of the target tiles.
     curr_tile = persona.scratch.curr_tile
-    collision_maze = maze.collision_maze
+    # collision_maze = maze.collision_maze
     closest_target_tile = None
     path = None
-    for i in target_tiles: 
-      # path_finder takes a collision_mze and the curr_tile coordinate as 
+    for i in target_tiles:
+      # path_finder takes a collision_mze and the curr_tile coordinate as
       # an input, and returns a list of coordinate tuples that becomes the
-      # path. 
+      # path.
       # e.g., [(0, 1), (1, 1), (1, 2), (1, 3), (1, 4)...]
-      curr_path = path_finder(maze.collision_maze, 
-                              curr_tile, 
-                              i, 
-                              collision_block_id)
-      if not closest_target_tile: 
+      curr_path = path_finder(
+        maze.collision_maze, curr_tile, i, collision_block_id
+      )
+      if not closest_target_tile or not path:
         closest_target_tile = i
         path = curr_path
-      elif len(curr_path) < len(path): 
+      elif len(curr_path) < len(path):
         closest_target_tile = i
         path = curr_path
 
-    # Actually setting the <planned_path> and <act_path_set>. We cut the 
-    # first element in the planned_path because it includes the curr_tile. 
-    persona.scratch.planned_path = path[1:]
-    persona.scratch.act_path_set = True
-  
+    # Actually setting the <planned_path> and <act_path_set>. We cut the
+    # first element in the planned_path because it includes the curr_tile.
+    if path:
+      persona.scratch.planned_path = path[1:]
+      persona.scratch.act_path_set = True
+
   # Setting up the next immediate step. We stay at our curr_tile if there is
   # no <planned_path> left, but otherwise, we go to the next tile in the path.
   ret = persona.scratch.curr_tile
-  if persona.scratch.planned_path: 
+  if persona.scratch.planned_path:
     ret = persona.scratch.planned_path[0]
     persona.scratch.planned_path = persona.scratch.planned_path[1:]
 
@@ -156,18 +159,3 @@ def execute(persona, maze, personas, plan):
 
   execution = ret, persona.scratch.act_pronunciatio, description
   return execution
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

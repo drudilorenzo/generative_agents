@@ -7,13 +7,8 @@ Description: Defines the core long-term memory module for generative agents.
 Note (May 1, 2023) -- this class is the Memory Stream module in the generative
 agents paper. 
 """
-import sys
-sys.path.append('../../')
-
 import json
 import datetime
-
-from global_methods import *
 
 
 class ConceptNode: 
@@ -331,30 +326,3 @@ class AssociativeMemory:
       return self.kw_to_chat[target_persona_name.lower()][0]
     else: 
       return False
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -4,16 +4,10 @@ Author: Joon Sung Park (joonspk@stanford.edu)
 File: global_methods.py
 Description: Contains functions used throughout my projects.
 """
-import random
-import string
+
 import csv
-import time
-import datetime as dt
-import pathlib
 import os
-import sys
 import numpy
-import math
 import shutil, errno
 
 from os import listdir

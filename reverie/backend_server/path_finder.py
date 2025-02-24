@@ -263,7 +263,3 @@ if __name__ == '__main__':
   print ("-===")
   path_finder_3(maze, start, end, "#")[0]
   path_finder_3(maze, start, end, "#")[1]
-
-
-
-
