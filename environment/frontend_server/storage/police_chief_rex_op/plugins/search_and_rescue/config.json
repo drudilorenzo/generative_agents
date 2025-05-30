@@ -1,0 +1,7 @@
+{
+  "run_between": {
+    "start_time": "00:01:00",
+    "end_time": "23:59:59"
+  },
+  "conversations_only": true
+}

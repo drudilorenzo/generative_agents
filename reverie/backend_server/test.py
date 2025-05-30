@@ -4,13 +4,10 @@ Author: Joon Sung Park (joonspk@stanford.edu)
 File: gpt_structure.py
 Description: Wrapper functions for calling OpenAI APIs.
 """
-import json
-import random
-import openai
-import time 
+from openai import OpenAI
+from utils import openai_api_key
 
-from utils import *
-openai.api_key = openai_api_key
+client = OpenAI(api_key=openai_api_key)
 
 def ChatGPT_request(prompt): 
   """
@@ -26,11 +23,9 @@ def ChatGPT_request(prompt):
   """
   # temp_sleep()
   try: 
-    completion = openai.ChatCompletion.create(
-    model="gpt-35-turbo-0125", 
-    messages=[{"role": "user", "content": prompt}]
-    )
-    return completion["choices"][0]["message"]["content"]
+    completion = client.chat.completions.create(model="gpt-4o-mini", 
+    messages=[{"role": "user", "content": prompt}])
+    return completion.choices[0].message.content
   
   except: 
     print ("ChatGPT ERROR")
@@ -60,6 +55,7 @@ Output the response to the prompt above in json. The output should be a list of 
 Example output json:
 {"output": "[["Jane Doe", "Hi!"], ["John Doe", "Hello there!"] ... ]"}
 """
+
 
 print (ChatGPT_request(prompt))
 

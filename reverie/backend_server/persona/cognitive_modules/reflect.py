@@ -4,19 +4,27 @@ Author: Joon Sung Park (joonspk@stanford.edu)
 File: reflect.py
 Description: This defines the "Reflect" module for generative agents. 
 """
-import sys
-sys.path.append('../../')
 
 import datetime
-import random
+# import random
+# from numpy import dot
+# from numpy.linalg import norm
 
-from numpy import dot
-from numpy.linalg import norm
+import sys
+sys.path.append('../../')
+from utils import debug
+from persona.prompt_template.run_gpt_prompt import (
+    run_gpt_prompt_event_triple,
+    run_gpt_prompt_event_poignancy,
+    run_gpt_prompt_chat_poignancy,
+    run_gpt_prompt_focal_pt,
+    run_gpt_prompt_insight_and_guidance,
+    run_gpt_prompt_planning_thought_on_convo,
+    run_gpt_prompt_memo_on_convo,
+)
+from persona.prompt_template.gpt_structure import get_embedding
+from persona.cognitive_modules.retrieve import new_retrieve
 
-from global_methods import *
-from persona.prompt_template.run_gpt_prompt import *
-from persona.prompt_template.gpt_structure import *
-from persona.cognitive_modules.retrieve import *
 
 def generate_focal_points(persona, n=3): 
   if debug: print ("GNS FUNCTION: <generate_focal_points>")
@@ -44,15 +52,17 @@ def generate_insights_and_evidence(persona, nodes, n=5):
 
   ret = run_gpt_prompt_insight_and_guidance(persona, statements, n)[0]
 
-  print (ret)
-  try: 
-
-    for thought, evi_raw in ret.items(): 
-      evidence_node_id = [nodes[i].node_id for i in evi_raw]
-      ret[thought] = evidence_node_id
-    return ret
-  except: 
-    return {"this is blank": "node_1"} 
+  print(ret)
+  try:
+    if isinstance(ret, dict):
+      for thought, evi_raw in ret.items():
+        evidence_node_id = [nodes[i].node_id for i in evi_raw]
+        ret[thought] = evidence_node_id
+      return ret
+    else:
+      return {"this is blank": "node_1"}
+  except:
+    return {"this is blank": "node_1"}
 
 
 def generate_action_event_triple(act_desp, persona): 
@@ -76,12 +86,24 @@ def generate_poig_score(persona, event_type, description):
   if "is idle" in description: 
     return 1
 
-  if event_type == "event" or event_type == "thought": 
-    return run_gpt_prompt_event_poignancy(persona, description)[0]
-  elif event_type == "chat": 
-    return run_gpt_prompt_chat_poignancy(persona, 
-                           persona.scratch.act_description)[0]
-
+  if event_type == "event" or event_type == "thought":
+    response = run_gpt_prompt_event_poignancy(persona, description)
+    if response:
+      return response[0]
+    else:
+      print(
+        "ERROR: <generate_poig_score> in reflect.py: Could not get event/thought poignancy."
+      )
+  elif event_type == "chat":
+    response = run_gpt_prompt_chat_poignancy(
+      persona, persona.scratch.act_description
+    )
+    if response:
+      return response[0]
+    else:
+      print(
+        "ERROR: <generate_poig_score> in reflect.py: Could not get chat poignancy."
+      )
 
 
 def generate_planning_thought_on_convo(persona, all_utt):
@@ -240,30 +262,3 @@ def reflect(persona):
       persona.a_mem.add_thought(created, expiration, s, p, o, 
                                 memo_thought, keywords, thought_poignancy, 
                                 thought_embedding_pair, evidence)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

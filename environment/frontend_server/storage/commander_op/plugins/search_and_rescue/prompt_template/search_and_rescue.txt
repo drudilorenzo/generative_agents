@@ -1,0 +1,44 @@
+search_and_rescue.txt
+
+Variables: 
+!<INPUT 0>! -- persona 1 learned
+!<INPUT 1>! -- persona 2 learned
+!<INPUT 2>! -- persona 3 learned
+!<INPUT 3>! -- current players status
+!<INPUT 4>! -- current conversation
+<commentblockmarker>###</commentblockmarker>
+Context for the task: 
+
+Below we have the Current players learned information, Current players status and Current conversation.
+
+Current players learned information:
+!<INPUT 0>!
+!<INPUT 1>!
+!<INPUT 2>!
+
+Current players status:
+!<INPUT 3>!
+
+Current conversation:
+!<INPUT 4>!
+
+---
+Task: Given the 
+Current players learned information:
+!<INPUT 0>!
+!<INPUT 1>!
+!<INPUT 2>!
+and 
+Current Player Status:!<INPUT 3>!
+and 
+Current conversation: !<INPUT 4>!  
+, decide whether the search and rescue mission has ended. 
+
+Output format: Output a json of the following format: 
+
+{
+    "Did the search and rescue mission end?": <json Boolean>,
+    "Was Maria Lopez rescued?": <json Boolean>,
+}
+
+Output:

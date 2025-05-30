@@ -6,15 +6,34 @@ Description: This defines the "Plan" module for generative agents.
 """
 import datetime
 import math
-import random 
-import sys
-import time
-sys.path.append('../../')
+import random
+import traceback
 
-from global_methods import *
-from persona.prompt_template.run_gpt_prompt import *
-from persona.cognitive_modules.retrieve import *
-from persona.cognitive_modules.converse import *
+import sys
+sys.path.append('../../')
+from utils import debug
+from persona.prompt_template.run_gpt_prompt import (
+    run_gpt_prompt_wake_up_hour,
+    run_gpt_prompt_daily_plan,
+    run_gpt_prompt_generate_hourly_schedule,
+    run_gpt_prompt_task_decomp,
+    run_gpt_prompt_action_sector,
+    run_gpt_prompt_action_arena,
+    run_gpt_prompt_action_game_object,
+    run_gpt_prompt_pronunciatio,
+    run_gpt_prompt_event_triple,
+    run_gpt_prompt_act_obj_desc,
+    run_gpt_prompt_act_obj_event_triple,
+    run_gpt_prompt_new_decomp_schedule,
+    run_gpt_prompt_decide_to_talk,
+    run_gpt_prompt_decide_to_react,
+    run_gpt_prompt_summarize_conversation,
+    run_gpt_prompt_prioritized_event_reaction
+)
+from persona.prompt_template.gpt_structure import ChatGPT_single_request, get_embedding
+from persona.cognitive_modules.retrieve import new_retrieve
+from persona.cognitive_modules.converse import agent_chat_v2
+
 
 ##############################################################################
 # CHAPTER 2: Generate
@@ -24,257 +43,315 @@ def generate_wake_up_hour(persona):
   """
   Generates the time when the persona wakes up. This becomes an integral part
   of our process for generating the persona's daily plan.
-  
+
   Persona state: identity stable set, lifestyle, first_name
 
-  INPUT: 
-    persona: The Persona class instance 
-  OUTPUT: 
+  INPUT:
+    persona: The Persona class instance
+  OUTPUT:
     an integer signifying the persona's wake up hour
-  EXAMPLE OUTPUT: 
+  EXAMPLE OUTPUT:
     8
   """
-  if debug: print ("GNS FUNCTION: <generate_wake_up_hour>")
+  if debug:
+    print("GNS FUNCTION: <generate_wake_up_hour>")
   return int(run_gpt_prompt_wake_up_hour(persona)[0])
 
 
-def generate_first_daily_plan(persona, wake_up_hour): 
+def generate_first_daily_plan(persona, wake_up_hour):
   """
-  Generates the daily plan for the persona. 
+  Generates the daily plan for the persona.
   Basically the long term planning that spans a day. Returns a list of actions
-  that the persona will take today. Usually comes in the following form: 
-  'wake up and complete the morning routine at 6:00 am', 
-  'eat breakfast at 7:00 am',.. 
-  Note that the actions come without a period. 
+  that the persona will take today. Usually comes in the following form:
+  'wake up and complete the morning routine at 6:00 am',
+  'eat breakfast at 7:00 am',..
+  Note that the actions come without a period.
 
   Persona state: identity stable set, lifestyle, cur_data_str, first_name
 
-  INPUT: 
-    persona: The Persona class instance 
-    wake_up_hour: an integer that indicates when the hour the persona wakes up 
+  INPUT:
+    persona: The Persona class instance
+    wake_up_hour: an integer that indicates when the hour the persona wakes up
                   (e.g., 8)
-  OUTPUT: 
+  OUTPUT:
     a list of daily actions in broad strokes.
-  EXAMPLE OUTPUT: 
-    ['wake up and complete the morning routine at 6:00 am', 
-     'have breakfast and brush teeth at 6:30 am',
-     'work on painting project from 8:00 am to 12:00 pm', 
-     'have lunch at 12:00 pm', 
-     'take a break and watch TV from 2:00 pm to 4:00 pm', 
-     'work on painting project from 4:00 pm to 6:00 pm', 
-     'have dinner at 6:00 pm', 'watch TV from 7:00 pm to 8:00 pm']
+  EXAMPLE OUTPUT:
+    ['wake up and complete the morning routine at 6:00 am',
+      'have breakfast and brush teeth at 6:30 am',
+      'work on painting project from 8:00 am to 12:00 pm',
+      'have lunch at 12:00 pm',
+      'take a break and watch TV from 2:00 pm to 4:00 pm',
+      'work on painting project from 4:00 pm to 6:00 pm',
+      'have dinner at 6:00 pm', 'watch TV from 7:00 pm to 8:00 pm']
   """
-  if debug: print ("GNS FUNCTION: <generate_first_daily_plan>")
+  if debug:
+    print("GNS FUNCTION: <generate_first_daily_plan>")
   return run_gpt_prompt_daily_plan(persona, wake_up_hour)[0]
 
 
-def generate_hourly_schedule(persona, wake_up_hour): 
+def generate_hourly_schedule(persona, wake_up_hour):
   """
-  Based on the daily req, creates an hourly schedule -- one hour at a time. 
-  The form of the action for each of the hour is something like below: 
+  Based on the daily req, creates an hourly schedule -- one hour at a time.
+  The form of the action for each of the hour is something like below:
   "sleeping in her bed"
-  
+
   The output is basically meant to finish the phrase, "x is..."
 
   Persona state: identity stable set, daily_plan
 
-  INPUT: 
-    persona: The Persona class instance 
-    persona: Integer form of the wake up hour for the persona.  
-  OUTPUT: 
-    a list of activities and their duration in minutes: 
-  EXAMPLE OUTPUT: 
-    [['sleeping', 360], ['waking up and starting her morning routine', 60], 
-     ['eating breakfast', 60],..
+  INPUT:
+    persona: The Persona class instance
+    persona: Integer form of the wake up hour for the persona.
+  OUTPUT:
+    a list of activities and their duration in minutes:
+  EXAMPLE OUTPUT:
+    [['sleeping', 360], ['waking up and starting her morning routine', 60],
+      ['eating breakfast', 60],..
   """
-  if debug: print ("GNS FUNCTION: <generate_hourly_schedule>")
+  if debug:
+    print("GNS FUNCTION: <generate_hourly_schedule>")
 
-  hour_str = ["00:00 AM", "01:00 AM", "02:00 AM", "03:00 AM", "04:00 AM", 
-              "05:00 AM", "06:00 AM", "07:00 AM", "08:00 AM", "09:00 AM", 
-              "10:00 AM", "11:00 AM", "12:00 PM", "01:00 PM", "02:00 PM", 
-              "03:00 PM", "04:00 PM", "05:00 PM", "06:00 PM", "07:00 PM",
-              "08:00 PM", "09:00 PM", "10:00 PM", "11:00 PM"]
+  hour_strings = [
+    "00:00 AM",
+    "01:00 AM",
+    "02:00 AM",
+    "03:00 AM",
+    "04:00 AM",
+    "05:00 AM",
+    "06:00 AM",
+    "07:00 AM",
+    "08:00 AM",
+    "09:00 AM",
+    "10:00 AM",
+    "11:00 AM",
+    "12:00 PM",
+    "01:00 PM",
+    "02:00 PM",
+    "03:00 PM",
+    "04:00 PM",
+    "05:00 PM",
+    "06:00 PM",
+    "07:00 PM",
+    "08:00 PM",
+    "09:00 PM",
+    "10:00 PM",
+    "11:00 PM",
+  ]
+
+  # Flag to indicate whether we are generating the hourly schedule all in one
+  # shot, or grabbing one activity at a time.
+  all_in_one = True
+
   n_m1_activity = []
   diversity_repeat_count = 3
-  for i in range(diversity_repeat_count): 
+
+  for task in range(diversity_repeat_count):
     n_m1_activity_set = set(n_m1_activity)
-    if len(n_m1_activity_set) < 5: 
+
+    if len(n_m1_activity_set) < 5:
       n_m1_activity = []
-      for count, curr_hour_str in enumerate(hour_str): 
-        if wake_up_hour > 0: 
-          n_m1_activity += ["sleeping"]
-          wake_up_hour -= 1
-        else: 
+
+      if all_in_one:
+        n_m1_activity = run_gpt_prompt_generate_hourly_schedule(
+          persona, n_m1_activity, hour_strings, all_in_one=True
+        )[0]
+      else:
+        for _i in range(len(hour_strings)):
           n_m1_activity += [run_gpt_prompt_generate_hourly_schedule(
-                          persona, curr_hour_str, n_m1_activity, hour_str)[0]]
-  
-  # Step 1. Compressing the hourly schedule to the following format: 
-  # The integer indicates the number of hours. They should add up to 24. 
-  # [['sleeping', 6], ['waking up and starting her morning routine', 1], 
-  # ['eating breakfast', 1], ['getting ready for the day', 1], 
-  # ['working on her painting', 2], ['taking a break', 1], 
-  # ['having lunch', 1], ['working on her painting', 3], 
-  # ['taking a break', 2], ['working on her painting', 2], 
+            persona, n_m1_activity, hour_strings, all_in_one=False
+          )[0]]
+
+  # Step 1. Compressing the hourly schedule to the following format:
+  # The integer indicates the number of hours. They should add up to 24.
+  # [['sleeping', 6], ['waking up and starting her morning routine', 1],
+  # ['eating breakfast', 1], ['getting ready for the day', 1],
+  # ['working on her painting', 2], ['taking a break', 1],
+  # ['having lunch', 1], ['working on her painting', 3],
+  # ['taking a break', 2], ['working on her painting', 2],
   # ['relaxing and watching TV', 1], ['going to bed', 1], ['sleeping', 2]]
   _n_m1_hourly_compressed = []
-  prev = None 
+  prev_task = None
   prev_count = 0
-  for i in n_m1_activity: 
-    if i != prev:
-      prev_count = 1 
-      _n_m1_hourly_compressed += [[i, prev_count]]
-      prev = i
-    else: 
-      if _n_m1_hourly_compressed: 
+  for task in n_m1_activity:
+    if task != prev_task:
+      prev_count = 1
+      _n_m1_hourly_compressed += [[task, prev_count]]
+      prev_task = task
+    else:
+      if _n_m1_hourly_compressed:
         _n_m1_hourly_compressed[-1][1] += 1
 
   # Step 2. Expand to min scale (from hour scale)
-  # [['sleeping', 360], ['waking up and starting her morning routine', 60], 
+  # [['sleeping', 360], ['waking up and starting her morning routine', 60],
   # ['eating breakfast', 60],..
   n_m1_hourly_compressed = []
-  for task, duration in _n_m1_hourly_compressed: 
-    n_m1_hourly_compressed += [[task, duration*60]]
+  for task, duration in _n_m1_hourly_compressed:
+    n_m1_hourly_compressed += [[task, duration * 60]]
 
   return n_m1_hourly_compressed
 
 
-def generate_task_decomp(persona, task, duration): 
+def generate_task_decomp(persona, task, duration):
   """
-  A few shot decomposition of a task given the task description 
+  A few shot decomposition of a task given the task description
 
   Persona state: identity stable set, curr_date_str, first_name
 
-  INPUT: 
-    persona: The Persona class instance 
+  INPUT:
+    persona: The Persona class instance
     task: the description of the task at hand in str form
           (e.g., "waking up and starting her morning routine")
-    duration: an integer that indicates the number of minutes this task is 
+    duration: an integer that indicates the number of minutes this task is
               meant to last (e.g., 60)
-  OUTPUT: 
-    a list of list where the inner list contains the decomposed task 
-    description and the number of minutes the task is supposed to last. 
-  EXAMPLE OUTPUT: 
-    [['going to the bathroom', 5], ['getting dressed', 5], 
-     ['eating breakfast', 15], ['checking her email', 5], 
-     ['getting her supplies ready for the day', 15], 
-     ['starting to work on her painting', 15]] 
+  OUTPUT:
+    a list of list where the inner list contains the decomposed task
+    description and the number of minutes the task is supposed to last.
+  EXAMPLE OUTPUT:
+    [['going to the bathroom', 5], ['getting dressed', 5],
+      ['eating breakfast', 15], ['checking her email', 5],
+      ['getting her supplies ready for the day', 15],
+      ['starting to work on her painting', 15]]
 
   """
-  if debug: print ("GNS FUNCTION: <generate_task_decomp>")
+  if debug:
+    print("GNS FUNCTION: <generate_task_decomp>")
   return run_gpt_prompt_task_decomp(persona, task, duration)[0]
 
 
-def generate_action_sector(act_desp, persona, maze): 
-  """TODO 
-  Given the persona and the task description, choose the action_sector. 
+def generate_action_sector(act_desp, persona, maze):
+  """TODO
+  Given the persona and the task description, choose the action_sector.
 
   Persona state: identity stable set, n-1 day schedule, daily plan
 
-  INPUT: 
+  INPUT:
     act_desp: description of the new action (e.g., "sleeping")
-    persona: The Persona class instance 
-  OUTPUT: 
+    persona: The Persona class instance
+  OUTPUT:
     action_arena (e.g., "bedroom 2")
-  EXAMPLE OUTPUT: 
+  EXAMPLE OUTPUT:
     "bedroom 2"
   """
-  if debug: print ("GNS FUNCTION: <generate_action_sector>")
+  if debug:
+    print("GNS FUNCTION: <generate_action_sector>")
   return run_gpt_prompt_action_sector(act_desp, persona, maze)[0]
 
 
-def generate_action_arena(act_desp, persona, maze, act_world, act_sector): 
-  """TODO 
-  Given the persona and the task description, choose the action_arena. 
+def generate_action_arena(act_desp, persona, maze, act_world, act_sector):
+  """TODO
+  Given the persona and the task description, choose the action_arena.
 
   Persona state: identity stable set, n-1 day schedule, daily plan
 
-  INPUT: 
+  INPUT:
     act_desp: description of the new action (e.g., "sleeping")
-    persona: The Persona class instance 
-  OUTPUT: 
+    persona: The Persona class instance
+  OUTPUT:
     action_arena (e.g., "bedroom 2")
-  EXAMPLE OUTPUT: 
+  EXAMPLE OUTPUT:
     "bedroom 2"
   """
-  if debug: print ("GNS FUNCTION: <generate_action_arena>")
-  return run_gpt_prompt_action_arena(act_desp, persona, maze, act_world, act_sector)[0]
+  if debug:
+    print("GNS FUNCTION: <generate_action_arena>")
+  return run_gpt_prompt_action_arena(act_desp, persona, act_world, act_sector)[
+    0
+  ]
 
 
 def generate_action_game_object(act_desp, act_address, persona, maze):
   """TODO
   Given the action description and the act address (the address where
-  we expect the action to task place), choose one of the game objects. 
+  we expect the action to task place), choose one of the game objects.
 
   Persona state: identity stable set, n-1 day schedule, daily plan
 
-  INPUT: 
+  INPUT:
     act_desp: the description of the action (e.g., "sleeping")
-    act_address: the arena where the action will take place: 
-               (e.g., "dolores double studio:double studio:bedroom 2")
-    persona: The Persona class instance 
-  OUTPUT: 
-    act_game_object: 
-  EXAMPLE OUTPUT: 
+    act_address: the arena where the action will take place:
+                (e.g., "dolores double studio:double studio:bedroom 2")
+    persona: The Persona class instance
+  OUTPUT:
+    act_game_object:
+  EXAMPLE OUTPUT:
     "bed"
   """
-  if debug: print ("GNS FUNCTION: <generate_action_game_object>")
-  if not persona.s_mem.get_str_accessible_arena_game_objects(act_address): 
+  if debug:
+    print("GNS FUNCTION: <generate_action_game_object>")
+  if not persona.s_mem.get_str_accessible_arena_game_objects(act_address):
+    print("ERROR: act_address not valid. Returning '<random>' as game object.")
+    print("act_address:", act_address)
     return "<random>"
-  return run_gpt_prompt_action_game_object(act_desp, persona, maze, act_address)[0]
+  return run_gpt_prompt_action_game_object(act_desp, persona, act_address)[0]
 
 
-def generate_action_pronunciatio(act_desp, persona): 
-  """TODO 
+def generate_action_pronunciatio(act_desp, persona):
+  """TODO
   Given an action description, creates an emoji string description via a few
-  shot prompt. 
+  shot prompt.
 
-  Does not really need any information from persona. 
+  Does not really need any information from persona.
 
-  INPUT: 
+  INPUT:
     act_desp: the description of the action (e.g., "sleeping")
     persona: The Persona class instance
-  OUTPUT: 
+  OUTPUT:
     a string of emoji that translates action description.
-  EXAMPLE OUTPUT: 
+  EXAMPLE OUTPUT:
     "🧈🍞"
   """
-  if debug: print ("GNS FUNCTION: <generate_action_pronunciatio>")
-  try: 
-    x = run_gpt_prompt_pronunciatio(act_desp, persona)[0]
-  except: 
-    x = "🙂"
+  if debug:
+    print("GNS FUNCTION: <generate_action_pronunciatio>")
+  try:
+    response = run_gpt_prompt_pronunciatio(act_desp, persona)
+    if response:
+      emoji = response[0]
+  except Exception:
+    traceback.print_exc()
+    emoji = "🙂"
 
-  if not x: 
-    return "🙂"
-  return x
+  if emoji:
+    return emoji
+  return "🙂"
 
 
-def generate_action_event_triple(act_desp, persona): 
-  """TODO 
+def generate_action_event_triple(act_desp, persona):
+  """TODO
 
-  INPUT: 
+  INPUT:
     act_desp: the description of the action (e.g., "sleeping")
     persona: The Persona class instance
-  OUTPUT: 
+  OUTPUT:
     a string of emoji that translates action description.
-  EXAMPLE OUTPUT: 
+  EXAMPLE OUTPUT:
     "🧈🍞"
   """
-  if debug: print ("GNS FUNCTION: <generate_action_event_triple>")
+  if debug:
+    print("GNS FUNCTION: <generate_action_event_triple>")
   return run_gpt_prompt_event_triple(act_desp, persona)[0]
 
 
-def generate_act_obj_desc(act_game_object, act_desp, persona): 
-  if debug: print ("GNS FUNCTION: <generate_act_obj_desc>")
-  return run_gpt_prompt_act_obj_desc(act_game_object, act_desp, persona)[0]
+def generate_act_obj_desc(act_game_object, act_desp, persona):
+  if debug:
+    print("GNS FUNCTION: <generate_act_obj_desc>")
+
+  # result = run_gpt_prompt_act_obj_desc(act_game_object, act_desp, persona)[0]
+  # if result is not None:
+  #     act_obj_desp = result
+  #     return act_obj_desp
+  # else:
+  #     return {}
+  return run_gpt_prompt_act_obj_desc(act_game_object, act_desp, persona)
 
 
-def generate_act_obj_event_triple(act_game_object, act_obj_desc, persona): 
-  if debug: print ("GNS FUNCTION: <generate_act_obj_event_triple>")
-  return run_gpt_prompt_act_obj_event_triple(act_game_object, act_obj_desc, persona)[0]
+def generate_act_obj_event_triple(act_game_object, act_obj_desc, persona):
+  if debug:
+    print("GNS FUNCTION: <generate_act_obj_event_triple>")
+  return run_gpt_prompt_act_obj_event_triple(act_game_object, act_obj_desc, persona)[
+    0
+  ]
 
 
-def generate_convo(maze, init_persona, target_persona): 
+def generate_convo(maze, init_persona, target_persona):
   curr_loc = maze.access_tile(init_persona.scratch.curr_tile)
 
   # convo = run_gpt_prompt_create_conversation(init_persona, target_persona, curr_loc)[0]
@@ -282,29 +359,36 @@ def generate_convo(maze, init_persona, target_persona):
   convo = agent_chat_v2(maze, init_persona, target_persona)
   all_utt = ""
 
-  for row in convo: 
+  for row in convo:
     speaker = row[0]
     utt = row[1]
     all_utt += f"{speaker}: {utt}\n"
 
-  convo_length = math.ceil(int(len(all_utt)/8) / 30)
+  convo_length = math.ceil(int(len(all_utt) / 8) / 30)
 
-  if debug: print ("GNS FUNCTION: <generate_convo>")
+  if debug:
+    print("GNS FUNCTION: <generate_convo>")
   return convo, convo_length
 
 
-def generate_convo_summary(persona, convo): 
-  convo_summary = run_gpt_prompt_summarize_conversation(persona, convo)[0]
-  return convo_summary
+def generate_convo_summary(persona, convo):
+  response = run_gpt_prompt_summarize_conversation(persona, convo)
+  if response:
+    convo_summary = response[0]
+    return convo_summary
+  else:
+    print("ERROR <generate_convo_summary>: Failed to generate convo summary.")
+    return ""
 
 
-def generate_decide_to_talk(init_persona, target_persona, retrieved): 
-  x =run_gpt_prompt_decide_to_talk(init_persona, target_persona, retrieved)[0]
-  if debug: print ("GNS FUNCTION: <generate_decide_to_talk>")
+def generate_decide_to_talk(init_persona, target_persona, retrieved):
+  x = run_gpt_prompt_decide_to_talk(init_persona, target_persona, retrieved)[0]
+  if debug:
+    print("GNS FUNCTION: <generate_decide_to_talk>")
 
-  if x == "yes": 
+  if x == "yes":
     return True
-  else: 
+  else:
     return False
 
 
@@ -315,11 +399,10 @@ def generate_decide_to_react(init_persona, target_persona, retrieved):
 
 def generate_new_decomp_schedule(persona, inserted_act, inserted_act_dur,  start_hour, end_hour): 
   # Step 1: Setting up the core variables for the function. 
-  # <p> is the persona whose schedule we are editing right now. 
-  p = persona
+
   # <today_min_pass> indicates the number of minutes that have passed today. 
-  today_min_pass = (int(p.scratch.curr_time.hour) * 60 
-                    + int(p.scratch.curr_time.minute) + 1)
+  today_min_pass = (int(persona.scratch.curr_time.hour) * 60 
+                    + int(persona.scratch.curr_time.minute) + 1)
   
   # Step 2: We need to create <main_act_dur> and <truncated_act_dur>. 
   # These are basically a sub-component of <f_daily_schedule> of the persona,
@@ -353,8 +436,7 @@ def generate_new_decomp_schedule(persona, inserted_act, inserted_act_dur,  start
   count = 0 # enumerate count
   truncated_fin = False 
 
-  print ("DEBUG::: ", persona.scratch.name)
-  for act, dur in p.scratch.f_daily_schedule: 
+  for act, dur in persona.scratch.f_daily_schedule:
     if (dur_sum >= start_hour * 60) and (dur_sum < end_hour * 60): 
       main_act_dur += [[act, dur]]
       if dur_sum <= today_min_pass:
@@ -362,24 +444,20 @@ def generate_new_decomp_schedule(persona, inserted_act, inserted_act_dur,  start
       elif dur_sum > today_min_pass and not truncated_fin: 
         # We need to insert that last act, duration list like this one: 
         # e.g., ['wakes up and completes her morning routine (wakes up...)', 2]
-        truncated_act_dur += [[p.scratch.f_daily_schedule[count][0], 
+        truncated_act_dur += [[persona.scratch.f_daily_schedule[count][0], 
                                dur_sum - today_min_pass]] 
         truncated_act_dur[-1][-1] -= (dur_sum - today_min_pass) ######## DEC 7 DEBUG;.. is the +1 the right thing to do??? 
         # truncated_act_dur[-1][-1] -= (dur_sum - today_min_pass + 1) ######## DEC 7 DEBUG;.. is the +1 the right thing to do??? 
-        print ("DEBUG::: ", truncated_act_dur)
 
         # truncated_act_dur[-1][-1] -= (dur_sum - today_min_pass) ######## DEC 7 DEBUG;.. is the +1 the right thing to do??? 
         truncated_fin = True
     dur_sum += dur
     count += 1
 
-  persona_name = persona.name 
-  main_act_dur = main_act_dur
-
   x = truncated_act_dur[-1][0].split("(")[0].strip() + " (on the way to " + truncated_act_dur[-1][0].split("(")[-1][:-1] + ")"
-  truncated_act_dur[-1][0] = x 
+  truncated_act_dur[-1][0] = x
 
-  if "(" in truncated_act_dur[-1][0]: 
+  if "(" in truncated_act_dur[-1][0]:
     inserted_act = truncated_act_dur[-1][0].split("(")[0].strip() + " (" + inserted_act + ")"
 
   # To do inserted_act_dur+1 below is an important decision but I'm not sure
@@ -391,14 +469,18 @@ def generate_new_decomp_schedule(persona, inserted_act, inserted_act_dur,  start
   end_time_hour = (datetime.datetime(2022, 10, 31, 0, 0) 
                    + datetime.timedelta(hours=end_hour))
 
-  if debug: print ("GNS FUNCTION: <generate_new_decomp_schedule>")
-  return run_gpt_prompt_new_decomp_schedule(persona, 
-                                            main_act_dur, 
-                                            truncated_act_dur, 
-                                            start_time_hour,
-                                            end_time_hour,
-                                            inserted_act,
-                                            inserted_act_dur)[0]
+  if debug:
+    print ("GNS FUNCTION: <generate_new_decomp_schedule>")
+
+  return run_gpt_prompt_new_decomp_schedule(
+    persona,
+    main_act_dur,
+    truncated_act_dur,
+    start_time_hour,
+    end_time_hour,
+    inserted_act,
+    inserted_act_dur
+  )[0]
 
 
 ##############################################################################
@@ -454,9 +536,95 @@ def revise_identity(persona):
 
   new_daily_req = ChatGPT_single_request(daily_req_prompt)
   new_daily_req = new_daily_req.replace('\n', ' ')
-  print ("WE ARE HERE!!!", new_daily_req)
+  print ("DEBUG new_daily_req:", new_daily_req)
   persona.scratch.daily_plan_req = new_daily_req
 
+def generate_prioritized_event_reaction(persona, priority):
+  """
+  Given the persona and the potential events to prioritize, call GPT to determine 
+  urgency scores for each event (0-10). Add on .1*importance/poignancy score to act as a tie-breaker,
+  and then order events in descending order. Return the list of prioritized events.
+
+  INPUT:
+    persona: The Persona class instance
+    priority: list of dictionaries containing keys curr_event (Concept node), 
+      events (list of event concept nodes related to the curr_event), thoughts 
+      (list of thought concept nodes that are related)
+  OUTPUT:
+    dict: A reordered list of INPUT dictionaries where first is the most pertinent event to react to, 
+    and it is followed by the less important events
+  EXAMPLE OUTPUT:
+    "[{curr_event: nodeA, events: [nodeB, nodeC,...], thoughts: [nodeD, nodeE,...]},...]"
+  """
+  # Only look at the curr_events part for simplicity
+  curr_events = [item["curr_event"] for item in priority]
+
+  # First, build out priority scores based on GPT function call
+  if debug:
+    print("GNS FUNCTION: <generate_prioritized_event_reaction>")
+  priorities = dict()
+  for node in curr_events:
+    priorities[node.node_id] = run_gpt_prompt_prioritized_event_reaction(persona, node)[
+      0
+    ]
+  if debug:
+    print("DEBUG------Priorities collected------")
+  # Second, extract poignancy scores to act as importance scores (essentially a tie-breaker)
+  importance_out = dict()
+  for count, node in enumerate(curr_events):
+    if isinstance(node.poignancy, int):
+      importance_out[node.node_id] = node.poignancy
+    else:
+      importance_out[node.node_id] = 4
+
+  # Importance weight is used to weight the importance_out of a node much lower than the most recent
+  # GPT call to determine urgency, and it essentially acts as a tiebreaker if there is a tie
+  importance_weight = 0.1
+  # Third, combine to create urgency scores
+  urgency_score = {
+    node_id: importance_weight * float(importance_out.get(node_id, 0))
+    + float(priorities.get(node_id, 0))
+    for node_id in set(importance_out) | set(priorities)
+  }
+  # Use these urgency scores to build an ordered list of output with more urgent events to react to first
+  urgency_scored_dict = {}
+  for event in priority:
+    node_id = event["curr_event"].node_id
+    urgency_scored_dict[node_id] = {
+      "data": event,
+      "urgency_score": urgency_score.get(node_id, 0),
+    }
+  # Print statements for debugging
+  if debug:
+    print("-------DEBUG Prioritize Events--------")
+    for key, value in urgency_scored_dict.items():
+      print(
+        f"Curr_event:{value['data']['curr_event'].spo_summary()}; Urgency Score: {value['urgency_score']}"
+      )
+    print("-------End of DEBUG Priotize Events------")
+
+  # urgency sorting function
+  def urgency_sort_key(event):
+    node_id = event[
+      "curr_event"
+    ].node_id  # get the node_id for the given event for indexing purposes
+    return (
+      urgency_scored_dict[node_id][
+        "urgency_score"
+      ],  # order by urgency score with a random tiebreaker
+      random.uniform(0, 1),  # Tie-breaker
+    )
+
+  # higher urgency scores listed first with a random tie breaker (if the urgency value and weighted importance_out are still equal)
+  sorted_list = sorted(
+    [value["data"] for value in urgency_scored_dict.values()],
+    key=urgency_sort_key,
+    reverse=True,
+  )
+  if debug:
+    # Print out the events for debugging to see data structures and sorted event list
+    print(f"Sorted List output for gen_prioritized_reaction: {sorted_list}")
+  return sorted_list
 
 def _long_term_planning(persona, new_day): 
   """
@@ -479,14 +647,21 @@ def _long_term_planning(persona, new_day):
     # if this is the start of generation (so there is no previous day's 
     # daily requirement, or if we are on a new day, we want to create a new
     # set of daily requirements.
+    #Making sure we revise the identity of the persona before creating the daily_req on day 1
+    revise_identity(persona)
+    
     persona.scratch.daily_req = generate_first_daily_plan(persona, 
                                                           wake_up_hour)
-  elif new_day == "New day":
+  elif new_day == "New day" and not persona.scratch.is_noncognitive():
     revise_identity(persona)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - TODO
     # We need to create a new daily_req here...
     persona.scratch.daily_req = persona.scratch.daily_req
+  
+  # elif new_day == "Same day":
+  #   revise_identity(persona)
+  #   persona.scratch.daily_req = persona.scratch.daily_req
 
   # Based on the daily_req, we create an hourly schedule for the persona, 
   # which is a list of todo items with a time duration (in minutes) that 
@@ -498,19 +673,20 @@ def _long_term_planning(persona, new_day):
 
 
   # Added March 4 -- adding plan to the memory.
-  thought = f"This is {persona.scratch.name}'s plan for {persona.scratch.curr_time.strftime('%A %B %d')}:"
-  for i in persona.scratch.daily_req: 
-    thought += f" {i},"
-  thought = thought[:-1] + "."
-  created = persona.scratch.curr_time
-  expiration = persona.scratch.curr_time + datetime.timedelta(days=30)
-  s, p, o = (persona.scratch.name, "plan", persona.scratch.curr_time.strftime('%A %B %d'))
-  keywords = set(["plan"])
-  thought_poignancy = 5
-  thought_embedding_pair = (thought, get_embedding(thought))
-  persona.a_mem.add_thought(created, expiration, s, p, o, 
-                            thought, keywords, thought_poignancy, 
-                            thought_embedding_pair, None)
+  if not persona.scratch.is_noncognitive(): # only add plan to memory if cognitive
+    thought = f"This is {persona.scratch.name}'s plan for {persona.scratch.curr_time.strftime('%A %B %d')}:"
+    for i in persona.scratch.daily_req: 
+      thought += f" {i},"
+    thought = thought[:-1] + "."
+    created = persona.scratch.curr_time
+    expiration = persona.scratch.curr_time + datetime.timedelta(days=30)
+    s, p, o = (persona.scratch.name, "plan", persona.scratch.curr_time.strftime('%A %B %d'))
+    keywords = set(["plan"])
+    thought_poignancy = 5
+    thought_embedding_pair = (thought, get_embedding(thought))
+    persona.a_mem.add_thought(created, expiration, s, p, o, 
+                              thought, keywords, thought_poignancy, 
+                              thought_embedding_pair, None)
 
   # print("Sleeping for 20 seconds...")
   # time.sleep(10)
@@ -595,7 +771,7 @@ def _determine_action(persona, maze):
   # Generate an <Action> instance from the action description and duration. By
   # this point, we assume that all the relevant actions are decomposed and 
   # ready in f_daily_schedule. 
-  print ("DEBUG LJSDLFSKJF")
+  print ("DEBUG here")
   for i in persona.scratch.f_daily_schedule: print (i)
   print (curr_index)
   print (len(persona.scratch.f_daily_schedule))
@@ -610,7 +786,7 @@ def _determine_action(persona, maze):
 
   if 1440 - x_emergency > 0: 
     print ("x_emergency__AAA", x_emergency)
-  persona.scratch.f_daily_schedule += [["sleeping", 1440 - x_emergency]]
+  persona.scratch.f_daily_schedule += [["idle", 1440 - x_emergency]]
   
 
 
@@ -631,8 +807,10 @@ def _determine_action(persona, maze):
   new_address = f"{act_world}:{act_sector}:{act_arena}:{act_game_object}"
   act_pron = generate_action_pronunciatio(act_desp, persona)
   act_event = generate_action_event_triple(act_desp, persona)
-  # Persona's actions also influence the object states. We set those up here. 
-  act_obj_desp = generate_act_obj_desc(act_game_object, act_desp, persona)
+  # Persona's actions also influence the object states. We set those up here.
+  act_obj_desp_response = generate_act_obj_desc(act_game_object, act_desp, persona)
+  act_obj_desp = act_obj_desp_response[0] if act_obj_desp_response else None
+
   act_obj_pron = generate_action_pronunciatio(act_obj_desp, persona)
   act_obj_event = generate_act_obj_event_triple(act_game_object, 
                                                 act_obj_desp, persona)
@@ -683,16 +861,22 @@ def _choose_retrieved(persona, retrieved):
     if (":" not in curr_event.subject 
         and curr_event.subject != persona.name): 
       priority += [rel_ctx]
-  if priority: 
-    return random.choice(priority)
+
+  if priority and len(priority) > 1:
+    return generate_prioritized_event_reaction(persona, priority)[0] 
+  elif priority and len(priority) == 1:
+    return priority[0]
 
   # Skip idle. 
   for event_desc, rel_ctx in retrieved.items(): 
     curr_event = rel_ctx["curr_event"]
     if "is idle" not in event_desc: 
       priority += [rel_ctx]
-  if priority: 
-    return random.choice(priority)
+
+  if priority and len(priority) > 1:
+    return generate_prioritized_event_reaction(persona, priority)[0]
+  elif priority and len(priority) == 1:
+    return priority[0]
   return None
 
 
@@ -859,12 +1043,12 @@ def _create_react(persona, inserted_act, inserted_act_dur,
 
 def _chat_react(maze, persona, focused_event, reaction_mode, personas):
   # There are two personas -- the persona who is initiating the conversation
-  # and the persona who is the target. We get the persona instances here. 
+  # and the persona who is the target. We get the persona instances here.
   init_persona = persona
   target_persona = personas[reaction_mode[9:].strip()]
-  curr_personas = [init_persona, target_persona]
+  # curr_personas = [init_persona, target_persona]
 
-  # Actually creating the conversation here. 
+  # Actually creating the conversation here.
   convo, duration_min = generate_convo(maze, init_persona, target_persona)
   convo_summary = generate_convo_summary(init_persona, convo)
   inserted_act = convo_summary
@@ -951,7 +1135,7 @@ def plan(persona, maze, personas, new_day, retrieved):
     The target action address of the persona (persona.scratch.act_address).
   """ 
   # PART 1: Generate the hourly schedule. 
-  if new_day: 
+  if new_day:
     _long_term_planning(persona, new_day)
 
   # PART 2: If the current action has expired, we want to create a new plan.
@@ -968,7 +1152,8 @@ def plan(persona, maze, personas, new_day, retrieved):
   #                     ["events"] = [<ConceptNode>, ...], 
   #                     ["thoughts"] = [<ConceptNode>, ...]}
   focused_event = False
-  if retrieved.keys(): 
+  if retrieved.keys():
+     # Will later add more logic to consider multiple events
     focused_event = _choose_retrieved(persona, retrieved)
   
   # Step 2: Once we choose an event, we need to determine whether the
@@ -1005,49 +1190,3 @@ def plan(persona, maze, personas, new_day, retrieved):
       persona.scratch.chatting_with_buffer[persona_name] -= 1
 
   return persona.scratch.act_address
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- 

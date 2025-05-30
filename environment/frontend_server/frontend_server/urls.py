@@ -13,11 +13,9 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.conf.urls import include, url
+from django.conf.urls import url
 from django.urls import path
 from django.contrib import admin
-from django.conf import settings
-from django.conf.urls.static import static
 
 from translator import views as translator_views
 
@@ -27,8 +25,8 @@ urlpatterns = [
     url(r'^demo/(?P<sim_code>[\w-]+)/(?P<step>[\w-]+)/(?P<play_speed>[\w-]+)/$', translator_views.demo, name='demo'),
     url(r'^replay/(?P<sim_code>[\w-]+)/(?P<step>[\w-]+)/$', translator_views.replay, name='replay'),
     url(r'^replay_persona_state/(?P<sim_code>[\w-]+)/(?P<step>[\w-]+)/(?P<persona_name>[\w-]+)/$', translator_views.replay_persona_state, name='replay_persona_state'),
-    url(r'^process_environment/$', translator_views.process_environment, name='process_environment'),
-    url(r'^update_environment/$', translator_views.update_environment, name='update_environment'),
+    url(r'^send_environment/$', translator_views.send_environment, name='send_environment'),
+    url(r'^get_movements/$', translator_views.get_movements, name='get_movements'),
     url(r'^path_tester/$', translator_views.path_tester, name='path_tester'),
     url(r'^path_tester_update/$', translator_views.path_tester_update, name='path_tester_update'),
     path('admin/', admin.site.urls),

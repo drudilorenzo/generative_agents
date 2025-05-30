@@ -8,30 +8,25 @@ Note (May 1, 2023) -- this is effectively GenerativeAgent class. Persona was
 the term we used internally back in 2022, taking from our Social Simulacra 
 paper.
 """
-import math
+
 import sys
-import datetime
-import random
 sys.path.append('../')
+from persona.memory_structures.spatial_memory import MemoryTree
+from persona.memory_structures.associative_memory import AssociativeMemory
+from persona.memory_structures.scratch import Scratch
 
-from global_methods import *
+from persona.cognitive_modules.perceive import perceive
+from persona.cognitive_modules.retrieve import retrieve
+from persona.cognitive_modules.plan import plan
+from persona.cognitive_modules.reflect import reflect
+from persona.cognitive_modules.execute import execute
+from persona.cognitive_modules.converse import open_convo_session
 
-from persona.memory_structures.spatial_memory import *
-from persona.memory_structures.associative_memory import *
-from persona.memory_structures.scratch import *
-
-from persona.cognitive_modules.perceive import *
-from persona.cognitive_modules.retrieve import *
-from persona.cognitive_modules.plan import *
-from persona.cognitive_modules.reflect import *
-from persona.cognitive_modules.execute import *
-from persona.cognitive_modules.converse import *
-
-class Persona: 
-  def __init__(self, name, folder_mem_saved=False):
-    # PERSONA BASE STATE 
+class Persona:
+  def __init__(self, name: str, folder_mem_saved: str):
+    # PERSONA BASE STATE
     # <name> is the full name of the persona. This is a unique identifier for
-    # the persona within Reverie. 
+    # the persona within Reverie.
     self.name = name
 
     # PERSONA MEMORY 
@@ -214,13 +209,17 @@ class Persona:
     elif (self.scratch.curr_time.strftime('%A %B %d')
           != curr_time.strftime('%A %B %d')):
       new_day = "New day"
+    # else:
+    #   new_day = "Same day"
+      
     self.scratch.curr_time = curr_time
 
     # Main cognitive sequence begins here. 
     perceived = self.perceive(maze)
     retrieved = self.retrieve(perceived)
     plan = self.plan(maze, personas, new_day, retrieved)
-    self.reflect()
+    if not self.scratch.is_noncognitive(): #noncognitive agents can't reflect at all
+      self.reflect()
 
     # <execution> is a triple set that contains the following components: 
     # <next_tile> is a x,y coordinate. e.g., (58, 9)
@@ -236,40 +235,3 @@ class Persona:
       return open_convo_session(self, convo_mode, safe_mode, direct, question)
     else: 
       return open_convo_session(self, convo_mode, safe_mode, direct)
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

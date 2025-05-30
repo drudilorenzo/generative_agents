@@ -1,0 +1,32 @@
+hide-and-seek.txt
+
+Variables: 
+!<INPUT 0>! -- persona 1 learned
+!<INPUT 1>! -- persona 2 learned
+!<INPUT 2>! -- current players status
+!<INPUT 3>! -- current conversation
+!<INPUT 4>! -- persona 1 name
+!<INPUT 5>! -- persona 2 name
+<commentblockmarker>###</commentblockmarker>
+Context for the task: 
+
+The following 2 people are playing a game of hide-and-seek.
+!<INPUT 0>!
+!<INPUT 1>!
+
+Current players status:
+!<INPUT 2>!
+
+Current conversation:
+!<INPUT 3>!
+
+---
+Task: Given the above, decide whether a game of hide-and-seek just ended, and whether each person won. If a game is still going, no one has won yet.
+Output format: Output a json of the following format: 
+{
+    "Did a game of hide-and-seek just end?": <json Boolean>,
+    "Did !<INPUT 4>! win?": <json Boolean>,
+    "Did !<INPUT 5>! win?": <json Boolean>,
+}
+
+Output:

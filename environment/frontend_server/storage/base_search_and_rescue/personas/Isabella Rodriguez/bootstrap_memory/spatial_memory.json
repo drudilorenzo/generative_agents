@@ -1,0 +1,78 @@
+{
+  "the Ville": {
+    "Living Area": {
+      "Living Area": [
+        "sofa"
+      ]
+    },
+    "Desk Area 1": {
+      "Desk Area 1": [
+        "desk",
+        "chair",
+        "filing cabinet"
+      ]
+    },
+    "Desk Area 2": {
+      "Desk Area 2": [
+        "desk",
+        "chair",
+        "monitor"
+      ]
+    },
+    "Small Conference Room 1": {
+      "Small Conference Room 1": [
+        "round table"
+      ]
+    },
+    "Small Conference Room 2": {
+      "Small Conference Room 2": [
+        "table"
+      ]
+    },
+    "Large Conference Room": {
+      "Large Conference Room": [
+        "long table"
+      ]
+    },
+    "Bathroom 1": {
+      "Bathroom 1": [
+        "toilet"
+      ]
+    },
+    "Bathroom 2": {
+      "Bathroom 2": [
+        "sink"
+      ]
+    },
+    "Closet": {
+      "Closet": [
+        "storage bin"
+      ]
+    },
+    "Hallway 1": {
+      "Hallway 1": [
+        "directional signage"
+      ]
+    },
+    "Hallway 2": {
+      "Hallway 2": [
+        "exit sign"
+      ]
+    },
+    "Hallway 3": {
+      "Hallway 3": [
+        "hallway sign"
+      ]
+    },
+    "Hallway 4": {
+      "Hallway 4": [
+        "hallway marker"
+      ]
+    },
+    "Break Room": {
+      "Break Room": [
+        "kitchen counter"
+      ]
+    }
+  }
+}

@@ -1,0 +1,7 @@
+[FORMAT]
+# String used as indentation unit.
+indent-string='  '
+
+[MESSAGES CONTROL]
+# Disable specific messages
+disable=C0303,C0116,C0103,C0115,R0903,C0321,R1705

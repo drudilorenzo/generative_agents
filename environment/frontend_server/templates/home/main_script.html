@@ -402,7 +402,7 @@
 	    // We then send this to the frontend server: 
 	    var retrieve_xobj = new XMLHttpRequest();
 	    retrieve_xobj.overrideMimeType("application/json");
-	    retrieve_xobj.open('POST', "{% url 'process_environment' %}", true);
+	    retrieve_xobj.open('GET', "{% url 'get_movements' %}", true);
 	    retrieve_xobj.send(json);   
 	    // Finally, we update the phase variable to start the "udpate" process. 
 	    // Now that we sent all persona locations to the backend server, we need
@@ -423,7 +423,7 @@
 	    if (timer <= 0) {
 	      var update_xobj = new XMLHttpRequest();
 	      update_xobj.overrideMimeType("application/json");
-	      update_xobj.open('POST', "{% url 'update_environment' %}", true);
+	      update_xobj.open('POST', "{% url 'send_environment' %}", true);
 	      update_xobj.addEventListener("load", function() {
 	        if (this.readyState === 4) {
 	          if (update_xobj.status === 200) {
@@ -566,7 +566,6 @@
 	var play_button=document.getElementById("play_button");
 	var pause_button=document.getElementById("pause_button");
 </script>
-
 
 
 

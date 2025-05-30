@@ -5,20 +5,19 @@ File: maze.py
 Description: Defines the Maze class, which represents the map of the simulated
 world in a 2-dimensional matrix. 
 """
+
 import json
-import numpy
-import datetime
-import pickle
-import time
 import math
+from typing import Union
 
-from global_methods import *
-from utils import *
+from global_methods import read_file_to_list
+from utils import env_matrix
 
-class Maze: 
-  def __init__(self, maze_name): 
+class Maze:
+  def __init__(self, maze_name, block_remaps: Union[dict, None] = None):
     # READING IN THE BASIC META INFORMATION ABOUT THE MAP
     self.maze_name = maze_name
+    self.block_remaps = block_remaps
     # Reading in the meta information about the world. If you want tp see the
     # example variables, check out the maze_meta_info.json file. 
     meta_info = json.load(open(f"{env_matrix}/maze_meta_info.json"))
@@ -50,22 +49,51 @@ class Maze:
     _wb = blocks_folder + "/world_blocks.csv"
     wb_rows = read_file_to_list(_wb, header=False)
     wb = wb_rows[0][-1]
-   
+
     _sb = blocks_folder + "/sector_blocks.csv"
     sb_rows = read_file_to_list(_sb, header=False)
+    # Apply any applicable sector remaps
+    if block_remaps is not None:
+      new_sb_rows = []
+      for row in sb_rows:
+        new_row = row.copy()
+        if row[2] in block_remaps["sector"]:
+          new_row[2] = block_remaps["sector"][row[2]]
+        new_sb_rows.append(new_row)
+      sb_rows = new_sb_rows
     sb_dict = dict()
     for i in sb_rows: sb_dict[i[0]] = i[-1]
-    
+
     _ab = blocks_folder + "/arena_blocks.csv"
     ab_rows = read_file_to_list(_ab, header=False)
+    # Apply any applicable arena remaps
+    if block_remaps is not None:
+      new_ab_rows = []
+      for row in ab_rows:
+        new_row = row.copy()
+        if row[2] in block_remaps["sector"]:
+          new_row[2] = block_remaps["sector"][row[2]]
+        if row[3] in block_remaps["arena"]:
+          new_row[3] = block_remaps["arena"][row[3]]
+        new_ab_rows.append(new_row)
+      ab_rows = new_ab_rows
     ab_dict = dict()
     for i in ab_rows: ab_dict[i[0]] = i[-1]
-    
+
     _gob = blocks_folder + "/game_object_blocks.csv"
     gob_rows = read_file_to_list(_gob, header=False)
+    # Apply any applicable game object remaps
+    if block_remaps is not None:
+      new_gob_rows = []
+      for row in gob_rows:
+        new_row = row.copy()
+        if row[3] in block_remaps["game_object"]:
+          new_row[3] = block_remaps["game_object"][row[3]]
+        new_gob_rows.append(new_row)
+      gob_rows = new_gob_rows
     gob_dict = dict()
     for i in gob_rows: gob_dict[i[0]] = i[-1]
-    
+
     _slb = blocks_folder + "/spawning_location_blocks.csv"
     slb_rows = read_file_to_list(_slb, header=False)
     slb_dict = dict()
@@ -380,37 +408,3 @@ class Maze:
     for event in curr_tile_ev_cp: 
       if event[0] == subject:  
         self.tiles[tile[1]][tile[0]]["events"].remove(event)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

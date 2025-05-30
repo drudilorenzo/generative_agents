@@ -6,11 +6,10 @@ Description: Defines the MemoryTree class that serves as the agents' spatial
 memory that aids in grounding their behavior in the game world. 
 """
 import json
+
 import sys
 sys.path.append('../../')
-
-from utils import *
-from global_methods import *
+from global_methods import check_if_file_exists
 
 class MemoryTree: 
   def __init__(self, f_saved): 
@@ -92,19 +91,25 @@ class MemoryTree:
     INPUT
       temp_address: optional arena address
     OUTPUT 
-      str list of all accessible game objects in the gmae arena. 
+      str list of all accessible game objects in the game arena. 
     EXAMPLE STR OUTPUT
       "phone, charger, bed, nightstand"
     """
     curr_world, curr_sector, curr_arena = arena.split(":")
 
-    if not curr_arena: 
+    # Check for the presence of necessary components in the arena address
+    if not curr_arena or not curr_sector or not curr_world: 
       return ""
 
-    try: 
-      x = ", ".join(list(self.tree[curr_world][curr_sector][curr_arena]))
-    except: 
-      x = ", ".join(list(self.tree[curr_world][curr_sector][curr_arena.lower()]))
+    # Attempt to access the arena, handling missing keys and case sensitivity
+    try:
+      game_objects = self.tree[curr_world][curr_sector][curr_arena]
+    except KeyError:
+      # If the exact key is not found, attempt with a lower case key
+      game_objects = self.tree[curr_world][curr_sector].get(curr_arena.lower(), [])
+
+    # Convert the game objects to a string list, if available
+    x = ", ".join(list(game_objects))
     return x
 
 
@@ -114,10 +119,3 @@ if __name__ == '__main__':
   x.print_tree()
 
   print (x.get_str_accessible_sector_arenas("dolores double studio:double studio"))
-
-
-
-
-
-
-

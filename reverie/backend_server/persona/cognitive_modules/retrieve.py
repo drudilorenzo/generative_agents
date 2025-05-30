@@ -4,44 +4,66 @@ Author: Joon Sung Park (joonspk@stanford.edu)
 File: retrieve.py
 Description: This defines the "Retrieve" module for generative agents. 
 """
-import sys
-sys.path.append('../../')
-
-from global_methods import *
-from persona.prompt_template.gpt_structure import *
-
 from numpy import dot
 from numpy.linalg import norm
 
-def retrieve(persona, perceived): 
+import sys
+sys.path.append('../../')
+from persona.prompt_template.gpt_structure import get_embedding
+
+def retrieve(persona, perceived):
   """
   This function takes the events that are perceived by the persona as input
-  and returns a set of related events and thoughts that the persona would 
-  need to consider as context when planning. 
+  and returns a set of related events and thoughts that the persona would
+  need to consider as context when planning.
 
-  INPUT: 
+  INPUT:
     perceived: a list of event <ConceptNode>s that represent any of the events
     `         that are happening around the persona. What is included in here
-              are controlled by the att_bandwidth and retention 
+              are controlled by the att_bandwidth and retention
               hyper-parameters.
-  OUTPUT: 
-    retrieved: a dictionary of dictionary. The first layer specifies an event, 
-               while the latter layer specifies the "curr_event", "events", 
+  OUTPUT:
+    retrieved: a dictionary of dictionary. The first layer specifies an event,
+               while the latter layer specifies the "curr_event", "events",
                and "thoughts" that are relevant.
   """
-  # We rerieve events and thoughts separately. 
+  # We retrieve events and thoughts separately.
   retrieved = dict()
-  for event in perceived: 
+
+  for event in perceived:
     retrieved[event.description] = dict()
     retrieved[event.description]["curr_event"] = event
-    
-    relevant_events = persona.a_mem.retrieve_relevant_events(
-                        event.subject, event.predicate, event.object)
-    retrieved[event.description]["events"] = list(relevant_events)
+    current_embedding = get_embedding(event.description)
 
+    # Events
+    relevant_events = persona.a_mem.retrieve_relevant_events(
+      event.subject, event.predicate, event.object
+    )
+    event_embeddings = {ev: get_embedding(ev.description) for ev in relevant_events}
+    event_similarities = {
+      ev: cos_sim(emb, current_embedding) for ev, emb in event_embeddings.items()
+    }
+    sorted_events = dict(
+      sorted(event_similarities.items(), key=lambda x: x[1], reverse=True)
+    )
+    retrieved[event.description]["events"] = list(sorted_events.keys())[:5]
+
+    # Thoughts
     relevant_thoughts = persona.a_mem.retrieve_relevant_thoughts(
-                          event.subject, event.predicate, event.object)
-    retrieved[event.description]["thoughts"] = list(relevant_thoughts)
+      event.subject, event.predicate, event.object
+    )
+    thought_embeddings = {
+      thought: get_embedding(thought.description) for thought in relevant_thoughts
+    }
+    thought_similarities = {
+      thought: cos_sim(emb, current_embedding)
+      for thought, emb in thought_embeddings.items()
+    }
+    sorted_thoughts = dict(
+      sorted(thought_similarities.items(), key=lambda x: x[1], reverse=True)
+    )
+    retrieved[event.description]["thoughts"] = list(sorted_thoughts.keys())[:5]
+    
     
   return retrieved
 
@@ -90,6 +112,9 @@ def normalize_dict_floats(d, target_min, target_max):
     target_min = -5
     target_max = 5
   """
+  if (len(d) == 0):
+    return d
+
   min_val = min(val for val in d.values())
   max_val = max(val for val in d.values())
   range_val = max_val - min_val
@@ -166,8 +191,11 @@ def extract_importance(persona, nodes):
                     values are the float that represents the importance score.
   """
   importance_out = dict()
-  for count, node in enumerate(nodes): 
-    importance_out[node.node_id] = node.poignancy
+  for count, node in enumerate(nodes):
+    if type(node.poignancy) == int:
+      importance_out[node.node_id] = node.poignancy
+    else:
+      importance_out[node.node_id] = 4
 
   return importance_out
 
@@ -196,7 +224,7 @@ def extract_relevance(persona, nodes, focal_pt):
   return relevance_out
 
 
-def new_retrieve(persona, focal_points, n_count=30): 
+def new_retrieve(persona, focal_points, n_count=30):
   """
   Given the current persona and focal points (focal points are events or 
   thoughts for which we are retrieving), we retrieve a set of nodes for each
@@ -215,9 +243,13 @@ def new_retrieve(persona, focal_points, n_count=30):
     persona = <persona> object 
     focal_points = ["How are you?", "Jane is swimming in the pond"]
   """
+  print("-------- new_retrieve ----------")
+  print("Number of focal_points: ", len(focal_points), flush=True)
+
   # <retrieved> is the main dictionary that we are returning
-  retrieved = dict() 
-  for focal_pt in focal_points: 
+  retrieved = dict()
+
+  for focal_pt in focal_points:
     # Getting all nodes from the agent's memory (both thoughts and events) and
     # sorting them by the datetime of creation.
     # You could also imagine getting the raw conversation, but for now. 
@@ -249,36 +281,28 @@ def new_retrieve(persona, focal_points, n_count=30):
                      + persona.scratch.importance_w*importance_out[key]*gw[2])
 
     master_out = top_highest_x_values(master_out, len(master_out.keys()))
-    for key, val in master_out.items(): 
-      print (persona.a_mem.id_to_node[key].embedding_key, val)
-      print (persona.scratch.recency_w*recency_out[key]*1, 
-             persona.scratch.relevance_w*relevance_out[key]*1, 
-             persona.scratch.importance_w*importance_out[key]*1)
+
+    print("\n-------- focal_pt: ", focal_pt, flush=True)
+    for key, val in master_out.items():
+      print("key: ", persona.a_mem.id_to_node[key].embedding_key, " val: ", val)
+      print(
+        "recency: ", persona.scratch.recency_w*recency_out[key]*1,
+        " relevance: ", persona.scratch.relevance_w*relevance_out[key]*1,
+        " importance: ", persona.scratch.importance_w*importance_out[key]*1
+      )
+    print(flush=True)
 
     # Extracting the highest x values.
     # <master_out> has the key of node.id and value of float. Once we get the 
     # highest x values, we want to translate the node.id into nodes and return
     # the list of nodes.
     master_out = top_highest_x_values(master_out, n_count)
-    master_nodes = [persona.a_mem.id_to_node[key] 
+    master_nodes = [persona.a_mem.id_to_node[key]
                     for key in list(master_out.keys())]
 
-    for n in master_nodes: 
+    for n in master_nodes:
       n.last_accessed = persona.scratch.curr_time
-      
+
     retrieved[focal_pt] = master_nodes
 
   return retrieved
-
-
-
-
-
-
-
-
-
-
-
-
-
